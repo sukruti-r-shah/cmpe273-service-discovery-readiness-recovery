@@ -1,40 +1,6 @@
 # CMPE 273 – Service Discovery, Readiness, and Pod Recovery on Kubernetes
 
-A small Inventory Service runs on Kubernetes as **2 replicas** behind a **Service** named
-`inventory-service`. A **client** Pod calls the Inventory Service once every 0.5s, using only the
-Service name (`http://inventory-service/items`) and never a Pod IP. Each response includes the
-name of the Pod that served it, so the logs show where every request went.
-
-The scripts demonstrate three behaviors:
-1. **Service discovery and load balancing:** requests reach both replicas.
-2. **Readiness:** an unready Pod keeps running but stops receiving traffic, and gets traffic again once it is ready.
-3. **Self-healing:** a deleted Pod is replaced by a new Pod with a new name, and the Service and client are unaffected.
-
-Cluster: **kind** (Kubernetes in Docker) on macOS.
-
----
-
 ## Architecture
-
-```mermaid
-flowchart LR
-    subgraph cluster["Kubernetes cluster (kind: sd-lab)"]
-        C["client Pod<br/>GET http://inventory-service/items<br/>every 0.5s"]
-        S{{"Service: inventory-service<br/>ClusterIP :80 → :8080<br/>selector app=inventory"}}
-        subgraph D["Deployment: inventory (replicas: 2)"]
-            P1["inventory Pod #1<br/>/items /ready /health"]
-            P2["inventory Pod #2<br/>/items /ready /health"]
-        end
-        K["kubelet<br/>readinessProbe → /ready<br/>livenessProbe → /health"]
-    end
-    C -- "DNS: inventory-service" --> S
-    S -- "only Ready Pods" --> P1
-    S -- "only Ready Pods" --> P2
-    K -. probes .-> P1
-    K -. probes .-> P2
-```
-
-Plain-text version:
 
 ```
                          ┌──────────── Deployment: inventory (replicas=2) ───────────┐
